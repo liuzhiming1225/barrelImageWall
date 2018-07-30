@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>图片墙</title>
+  <style>
+    *{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      text-decoration: none;
+    }
+    html{
+    	overflow-x:hidden;
+    }
+    body{
+    
+    background: -webkit-linear-gradient(left top, red , blue); /* Safari 5.1 - 6.0 */
+    background: -o-linear-gradient(bottom right, red, blue); /* Opera 11.1 - 12.0 */
+    background: -moz-linear-gradient(bottom right, red, blue); /* Firefox 3.6 - 15 */
+    background: linear-gradient(to bottom right, white , #00f0ff); /* 标准的语法（必须放在最后）
+    }
+    main{
+      position: relative;
+      /*margin: 10px ;*/
+      overflow: hidden;
+      padding:0;
+      width: 100%;
+    }
+    /*main::after{
+      content: '';
+      display: block;
+      clear: both;
+    }*/
+   .fl{
+   	float: left;
+   }
+   .fr{
+   	float: right;
+   }
+   header{
+    background: linear-gradient(to bottom right, white , #44F3FE); 
+   	overflow: hidden;
+   	padding: 10px;
+   	position: fixed;
+   	top: 0;
+   	background-color: white;
+   	z-index: 2;
+   	width: 100%;
+   }
+   .nav{
+   	margin-right: 150px;
+   }
+	.nav ul li{
+   	display: inline-block;
+   	list-style: none;
+   	padding: 5px 20px;
+   	border-radius: 10px;
+   	font-weight: bold;
+   	/*background-color: #F1F1F1;*/
+   	color: black;
+   	margin: 0 5px;
+   }
+   .nav ul li.account{
+   	background-color: #3CB46E;
+   }
+    .nav ul li.account a{
+    	color: white;
+    }
+   .nav ul li a{
+   	color: #555;
+   	font-size: 14px;
+   }
+   .ct{
+   	margin:0 50px;
+   	overflow: hidden;
+   }
+   /*.div{
+   	overflow: hidden;
+   }*/
+    main>div{
+      float: left;
+      padding: 5px;
+      /*border:1px solid #aaa;*/
+    }
+    main>div img{
+      width: 100%;
+      height: 100%;
+    }
+    .search{
+    	margin-left: 100px;
+    }
+    .search input{
+      width:220px;
+      padding: 5px;
+      border-radius: 10px;
+      background: #f1f1f1;   
+      width: 300px; 	
+      outline: none;
+    }
+    #search{
+      border-radius: 20px;
+      color:#808080;
+      border:1px outset grey;
+      width: 50px;;
+      height:26px;
+    }
+    #search:active{
+    	background-color: #3CB46E;
+    }
+    #search:active{
+      /*border:1px inset grey;*/
+    }
+    .description{
+    	padding-top: 50px;
+    	margin:20px 100px;
+    }
+    .description p{
+    	margin: 5px 0;
+    }
+    #load{
+    	visibility: hidden;
+    	height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="search fl">
+      <input type="search" placeholder="Search free high-resolution photos">
+      <button id="search">搜索</button>
+    </div>
+    <div class="nav fr">
+    	<ul>
+    		<li><a href="#">Home</a></li>
+    		<li><a href="#">Collection</a></li>
+    		<li><a href="#">Share</a></li>
+    		<li><a href="#">About</a></li>
+    		<li class="account"><a href="#">Login</a></li>
+    		<li class="account"><a href="#">Join free</a></li>
+    	</ul>
+    </div>
+  </header>
+  <div class="description">
+  		<h1>A good photo is a light to the soul!</h1>
+  		<p>Search any photos you want,and begin your beautiful journey!</p>
+  		<p>The best and most beautiful things in the world can not be seen or even touched, they must be felt with heart.</p>
+  </div>
+  <div class="ct">
+  <main id='main'>
+  </main>
+	</div>
+  <div id="load">you can't see me!</div>
+	
+	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script>
+      var mainNode =document.querySelector('#main');
+//    var mainNodeWidth = parseFloat(getComputedStyle(mainNode).width)-40;
+      var baseHeight = 180;
+      var input = document.querySelector('header input');
+      var search = document.querySelector('#search');
+      var rowList = [],
+          rowTotalWidth = 0;
+			var remember='';
+			var curPage = 1;
+			var keyword0 = '';
+			var isDataArrive=true;
+      start('sun');
+
+      function start(keyword){
+      	keyword0 = keyword;
+      	curPage = 1;
+        mainNode.innerHTML = '';
+        mainNodeWidth = parseFloat(getComputedStyle(mainNode).width)-40;
+        rowList = [];
+        rowTotalWidth = 0;
+        remember = keyword;
+        getData(keyword)
+            .then(render)
+      } 
+      function goon(){
+//    	if(keyword!=''){
+      		console.log(keyword0)
+      		getData(keyword0)
+            .then(render)
+//    	}
+      }
+
+      search.onclick = function(){
+        start(input.value);
+      }
+			window.onresize = throttle(function() {
+				console.log(123123212)
+    		start(remember)
+			},300)
+      function throttle(fn,delay) {
+        var timer = null;
+        return function() {
+          var self = this;
+          clearTimeout(timer)
+          timer = setTimeout(function() {
+          fn.apply(self,arguments);
+          },delay)
+         }
+      }
+
+      function getData(keyword){
+        return new Promise(function(resolve,reject){
+          var data = {
+            key: '9508819-7fe64cc96f02ebb0b4bf06eff',
+            q:keyword,
+            image_type:'photo',
+            per_page:15,
+            page:curPage
+          }
+          var url = 'https://pixabay.com/api/?'
+          for(var key in data){
+            url+=encodeURIComponent(key)+'='+encodeURIComponent(data[key])+'&';
+          }
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET',url,true);
+          xhr.send();
+          xhr.onload = function(){
+            if(this.status>=200&&this.status<300 || this.status === 304){
+            	curPage++;
+              resolve(JSON.parse(this.response));
+            }else{
+              reject(function(error){
+                console.log('error')
+              })
+            }
+          }
+        })
+      }
+
+      function render(data){
+      	isDataArrive = false;
+        data.hits.forEach(function(imgInfo){
+          imgInfo.newHeight = baseHeight;
+          imgInfo.newWidth  = (baseHeight * imgInfo.webformatWidth) / imgInfo.webformatHeight;
+          if(imgInfo.newWidth + rowTotalWidth <= mainNodeWidth){
+            rowList.push(imgInfo);
+            rowTotalWidth += imgInfo.newWidth;
+          }else{
+            var rowHeight = (imgInfo.newHeight*mainNodeWidth)/rowTotalWidth;
+            layout(rowList,rowHeight);
+            rowList=[imgInfo];
+            rowTotalWidth = imgInfo.newWidth;
+          }
+        })
+//      layout(rowList,baseHeight);
+			isDataArrive = true;
+      }
+
+
+      function layout(list,rowHeight){
+         list.forEach(function(imgInfo){
+           var divNode = document.createElement('div');
+           var imgNode = document.createElement('img');
+           imgNode.src = imgInfo.webformatURL;
+           divNode.appendChild(imgNode);
+           divNode.style.height = rowHeight+'px';
+           divNode.style.width = imgInfo.newWidth * rowHeight / baseHeight + 'px';
+           mainNode.appendChild(divNode);
+           console.log(mainNodeWidth)
+
+        })
+      }
+		function isVisible($item){
+				var scrollH = $(window).scrollTop(),
+						winH = $(window).height(),
+						top = $item.offset().top;
+
+				if(top<winH+scrollH){
+					return true;
+				}else{
+					return false;
+				}
+		}
+		$(window).scroll(throttle(function(){
+			if(!isDataArrive)return;
+			if(isVisible($('#load'))){
+				goon();
+			}
+		},300))
+		throttle(function() {
+				console.log(123123212)
+    		start(remember)
+			},300)
+
+
+
+  </script>
+</body>
+</html>
